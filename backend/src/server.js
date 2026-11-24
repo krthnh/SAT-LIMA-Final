@@ -17,11 +17,37 @@ import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 const app = express();
 
 // --- Middlewares globales ---
-// CORS flexible para producción (Vercel) y desarrollo local.
-const corsOrigin = process.env.CORS_ORIGIN && process.env.CORS_ORIGIN !== '*'
-  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-  : true;
-app.use(cors({ origin: corsOrigin, credentials: true }));
+const allowedOrigins = [
+  'https://sat-lima-final.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
+
+if (process.env.CORS_ORIGIN && process.env.CORS_ORIGIN !== '*') {
+  process.env.CORS_ORIGIN.split(',').forEach(url => {
+    const cleanUrl = url.trim().replace(/\/$/, '');
+    if (cleanUrl && !allowedOrigins.includes(cleanUrl)) {
+      allowedOrigins.push(cleanUrl);
+    }
+  });
+}
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (Postman, curl) o desde orígenes autorizados
+    if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origen no permitido por CORS: ${origin}`));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Responder rápido a preflight requests
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
