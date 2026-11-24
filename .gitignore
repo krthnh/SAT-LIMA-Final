@@ -1,0 +1,15 @@
+# Backend
+node_modules/
+.env
+npm-debug.log*
+.env.local
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.vercel/
+
+# Sistema
+.DS_Store
+*.log
